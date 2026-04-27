@@ -61,21 +61,19 @@ class Pathfinder:
         return [], float('inf') # Return empty if no path is possible
 
 # --- Execution Block ---
+# --- Execution Block ---
 if __name__ == "__main__":
-    # 1. Build the city
     city = CityGraph(5, 5)
-    
-    # 2. Give the city to our Pathfinder
     router = Pathfinder(city)
     
-    # 3. Define start and end points
     ambulance_location = (0, 0)
     victim_location = (4, 4)
     
     print(f"Calculating route from {ambulance_location} to {victim_location}...")
-    
-    # 4. Run A* Search
     optimal_path, total_time = router.a_star(ambulance_location, victim_location)
     
     print(f"Optimal Path: {optimal_path}")
     print(f"Total Travel Time: {total_time:.2f} minutes")
+    
+    # Render the result
+    city.visualize(path=optimal_path)
