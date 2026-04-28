@@ -54,6 +54,24 @@ class CityGraph:
         plt.title(f"Aegis Simulator - Route Visualization", fontsize=14)
         plt.show()
 
+    def update_hazard_level(self, u: Tuple[int, int], v: Tuple[int, int], probability: float) -> None:
+        """
+        Updates the weight of a road based on the probability of a hazard.
+        This is where Perception meets Navigation.
+        """
+        if not self.graph.has_edge(u, v):
+            return
+
+        if probability > 0.6:
+            new_weight = 999.0  # Impassable
+        elif probability > 0.2:
+            new_weight = 10.0   # Dangerous/Slow
+        else:
+            new_weight = 1.0    # Clear
+
+        self.graph[u][v]['weight'] = new_weight
+        print(f"Road {u}->{v} weight updated to {new_weight} (Prob: {probability:.2f})")
+
 # --- Execution Block ---
 # This only runs if we execute this specific file directly.
 if __name__ == "__main__":
