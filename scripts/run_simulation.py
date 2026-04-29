@@ -1,36 +1,54 @@
 from src.core.environment import CityGraph
 from src.navigation.pathfinder import Pathfinder
-from src.perception.hazard_tracker import HazardTracker
-from src.reasoning.triage import TriageEngine
+from src.optimization.dispatcher import FleetDispatcher
 from src.core.victim import Victim
 
 def main():
-    # 1. Setup
-    city = CityGraph(width=7, height=7)
+    print("Initializing Aegis Disaster Response System...")
+    # Make a slightly larger city for the fleet
+    city = CityGraph(width=8, height=8)
     router = Pathfinder(city)
-    triage = TriageEngine()
+    dispatcher = FleetDispatcher()
     
-    # 2. Spawn two victims
-    # Victim 1 is at (6,6), unconscious (Serious!)
-    v1 = Victim(id=1, location=(6, 6), vitals={'breathing': True, 'conscious': False})
-    # Victim 2 is at (0,6), conscious (Less serious)
-    v2 = Victim(id=2, location=(0, 6), vitals={'breathing': True, 'conscious': True})
+    # 1. Define the Fleet (Ambulance Starting Locations)
+    ambulances = [(0, 0), (7, 0), (0, 7)]
     
-    # 3. AI Reasoning: The Triage Phase
-    for v in [v1, v2]:
-        v.priority = triage.evaluate(v.vitals)
-        print(f"Inferred: {v}")
-
-    # 4. Decision Making: Who do we save first?
-    # Logic: Pick RED over YELLOW
-    targets = sorted([v1, v2], key=lambda x: (x.priority != "RED"))
-    primary_target = targets[0]
+    # 2. Define the Victims scattered across the city
+    victims = [
+        Victim(id=0, location=(4, 4), vitals={'breathing': True, 'conscious': False}),
+        Victim(id=1, location=(6, 2), vitals={'breathing': True, 'conscious': True}),
+        Victim(id=2, location=(2, 6), vitals={'breathing': True, 'conscious': False})
+    ]
     
-    print(f"\nAI DECISION: Heading to {primary_target} first because priority is {primary_target.priority}")
-
-    # 5. Route to the high-priority victim
-    path, time = router.a_star((0,0), primary_target.location)
-    city.visualize(path=path)
+    # 3. Build the Dynamic Cost Matrix using A* Search
+    print("Calculating environment geometry and A* travel times...")
+    cost_matrix = []
+    
+    for i, amb_loc in enumerate(ambulances):
+        amb_costs = []
+        for j, vic in enumerate(victims):
+            # Run A* to find the actual travel time accounting for road weights
+            path, travel_time = router.a_star(amb_loc, vic.location)
+            amb_costs.append(travel_time)
+            
+        cost_matrix.append(amb_costs)
+        print(f"Ambulance {i} evaluated all targets.")
+        
+    # 4. Run Multi-Agent Optimization
+    print("\nExecuting Operations Research (Hungarian Algorithm)...")
+    optimal_assignments = dispatcher.optimize_assignments(cost_matrix)
+    
+    # 5. Output the final global strategy
+    print("\n=== OPTIMAL FLEET DISPATCH STRATEGY ===")
+    total_time = 0
+    for amb_idx, vic_idx in optimal_assignments:
+        amb_loc = ambulances[amb_idx]
+        vic_loc = victims[vic_idx].location
+        time = cost_matrix[amb_idx][vic_idx]
+        total_time += time
+        print(f"DISPATCH: Ambulance {amb_idx} {amb_loc} -> Victim {vic_idx} {vic_loc} (ETA: {time:.2f} mins)")
+        
+    print(f"\nTotal Fleet Action Time: {total_time:.2f} mins")
 
 if __name__ == "__main__":
     main()
