@@ -1,7 +1,16 @@
+import os
+import sys
+
 import streamlit as st
 import matplotlib.pyplot as plt
 import networkx as nx
 import random
+
+# Ensure the local workspace package is imported first, avoiding a globally installed
+# package named `src` from shadowing the project's own source code.
+project_root = os.path.abspath(os.path.dirname(__file__))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
 try:
     import osmnx as ox
