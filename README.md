@@ -136,7 +136,7 @@ Load it in code with `CityGraph(filepath="data/osm/piedmont.graphml")`.
 
 ## Author
 
-**Ashish Sharma** — B.Sc. Computer Science (Year 1)  
+**Ashish Sharma** — B.Sc. Applied AI and Data science (Year 1)  
 GitHub: [@ashishsrs01](https://github.com/ashishsrs01)
 
 ---
