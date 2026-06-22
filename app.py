@@ -17,6 +17,19 @@ try:
 except ImportError:
     ox = None
 
+import importlib
+import src.core.environment
+import src.core.victim
+import src.navigation.pathfinder
+import src.optimization.dispatcher
+import src.reasoning.triage
+
+importlib.reload(src.core.environment)
+importlib.reload(src.core.victim)
+importlib.reload(src.navigation.pathfinder)
+importlib.reload(src.optimization.dispatcher)
+importlib.reload(src.reasoning.triage)
+
 from src.core.environment import CityGraph
 from src.core.victim import Victim
 from src.navigation.pathfinder import Pathfinder
