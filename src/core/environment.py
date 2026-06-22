@@ -22,14 +22,11 @@ class CityGraph:
             print(f"Loading real OSM data for '{location}'...")
             # Fetch the drive network for the specified location
             self.graph = ox.graph_from_place(location, network_type='drive')
-            # Convert MultiDiGraph to a standard Graph to keep pathfinding simple
-            self.graph = nx.Graph(self.graph)
             self.is_osm = True
             
         elif filepath and ox:
             print(f"Loading OSM data from file {filepath}...")
             self.graph = ox.load_graphml(filepath)
-            self.graph = nx.Graph(self.graph)
             self.is_osm = True
             
         else:
@@ -55,18 +52,21 @@ class CityGraph:
 
     def _initialize_edge_weights(self) -> None:
         """Assigns initial travel times (weights) to all roads."""
-        for u, v in self.graph.edges():
-            if self.is_osm and 'length' in self.graph[u][v]:
-                # In OSM, edge length is in meters. We convert to an estimated travel time.
-                # Assuming an average urban speed of ~500 meters per minute (30 km/h).
-                self.graph[u][v]['weight'] = self.graph[u][v]['length'] / 500.0
-            else:
-                # Random time between 1 and 3 minutes for synthetic grids
+        if self.is_osm:
+            for u, v, key, data in self.graph.edges(keys=True, data=True):
+                if 'length' in data:
+                    data['weight'] = data['length'] / 500.0
+                else:
+                    data['weight'] = 1.0
+        else:
+            for u, v in self.graph.edges():
                 self.graph[u][v]['weight'] = random.uniform(1.0, 3.0)
 
     def get_weight(self, u: Any, v: Any) -> float:
         """Safely retrieve the weight between two connected nodes."""
         if self.graph.has_edge(u, v):
+            if self.is_osm:
+                return min(data.get('weight', float('inf')) for data in self.graph[u][v].values())
             return self.graph[u][v]['weight']
         return float('inf') # Infinite cost if no road exists
 
@@ -112,7 +112,11 @@ class CityGraph:
         else:
             new_weight = 1.0    # Clear
 
-        self.graph[u][v]['weight'] = new_weight
+        if self.is_osm:
+            for key in self.graph[u][v]:
+                self.graph[u][v][key]['weight'] = new_weight
+        else:
+            self.graph[u][v]['weight'] = new_weight
         print(f"Road {u}->{v} weight updated to {new_weight} (Prob: {probability:.2f})")
 
 # --- Execution Block ---

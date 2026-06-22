@@ -3,6 +3,11 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import random
 
+try:
+    import osmnx as ox
+except ImportError:
+    ox = None
+
 # Import your custom AI modules
 from src.core.environment import CityGraph
 from src.navigation.pathfinder import Pathfinder
@@ -94,29 +99,55 @@ if run_btn:
         # 6. Render the Map visually
         with col2:
             st.subheader("Live Operations Map")
-            fig, ax = plt.subplots(figsize=(8, 8))
             
-            # Use cached positions from environment
-            pos = city.positions
-            weights = [city.graph[u][v].get('weight', 1.0) for u, v in city.graph.edges()]
-            
-            nx.draw(city.graph, pos, ax=ax, node_color='lightgray', with_labels=False, 
-                    node_size=10 if city.is_osm else 100, 
-                    edge_color=weights, edge_cmap=plt.cm.Reds, 
-                    width=0.5 if city.is_osm else 1.5)
-            
-            colors = ['lime', 'cyan', 'yellow']
-            for amb_idx, vic_idx in optimal_assignments:
-                path = paths[(amb_idx, vic_idx)]
-                if not path:
-                    continue
-                color = colors[amb_idx % len(colors)]
+            if city.is_osm and ox is not None:
+                routes = []
+                route_colors = []
+                colors = ['lime', 'cyan', 'yellow']
+                for amb_idx, vic_idx in optimal_assignments:
+                    path = paths.get((amb_idx, vic_idx))
+                    if path:
+                        routes.append(path)
+                        route_colors.append(colors[amb_idx % len(colors)])
                 
-                path_edges = list(zip(path, path[1:]))
-                nx.draw_networkx_nodes(city.graph, pos, ax=ax, nodelist=path, node_color=color, node_size=30 if city.is_osm else 200)
-                nx.draw_networkx_edges(city.graph, pos, ax=ax, edgelist=path_edges, edge_color=color, width=2 if city.is_osm else 4)
+                if routes:
+                    # plot_graph_routes handles the background graph and the routes!
+                    fig, ax = ox.plot_graph_routes(city.graph, routes, route_colors=route_colors, route_linewidth=4, node_size=0, show=False, close=False)
+                else:
+                    fig, ax = ox.plot_graph(city.graph, node_size=0, show=False, close=False)
                 
-                nx.draw_networkx_nodes(city.graph, pos, ax=ax, nodelist=[ambulances[amb_idx]], node_color='blue', node_shape='s', node_size=100 if city.is_osm else 400)
-                nx.draw_networkx_nodes(city.graph, pos, ax=ax, nodelist=[victims[vic_idx].location], node_color='red', node_shape='^', node_size=100 if city.is_osm else 400)
+                # Add markers for ambulances and victims
+                for amb_idx, vic_idx in optimal_assignments:
+                    amb_loc = ambulances[amb_idx]
+                    vic_loc = victims[vic_idx].location
+                    ax.scatter(city.positions[amb_loc][0], city.positions[amb_loc][1], c='blue', marker='s', s=100, zorder=5)
+                    ax.scatter(city.positions[vic_loc][0], city.positions[vic_loc][1], c='red', marker='^', s=100, zorder=5)
+                    
+                st.pyplot(fig)
+            else:
+                fig, ax = plt.subplots(figsize=(8, 8))
                 
-            st.pyplot(fig)
+                # Use cached positions from environment
+                pos = city.positions
+                weights = [city.graph[u][v].get('weight', 1.0) for u, v in city.graph.edges()]
+                
+                nx.draw(city.graph, pos, ax=ax, node_color='lightgray', with_labels=False, 
+                        node_size=100, 
+                        edge_color=weights, edge_cmap=plt.cm.Reds, 
+                        width=1.5)
+                
+                colors = ['lime', 'cyan', 'yellow']
+                for amb_idx, vic_idx in optimal_assignments:
+                    path = paths[(amb_idx, vic_idx)]
+                    if not path:
+                        continue
+                    color = colors[amb_idx % len(colors)]
+                    
+                    path_edges = list(zip(path, path[1:]))
+                    nx.draw_networkx_nodes(city.graph, pos, ax=ax, nodelist=path, node_color=color, node_size=200)
+                    nx.draw_networkx_edges(city.graph, pos, ax=ax, edgelist=path_edges, edge_color=color, width=4)
+                    
+                    nx.draw_networkx_nodes(city.graph, pos, ax=ax, nodelist=[ambulances[amb_idx]], node_color='blue', node_shape='s', node_size=400)
+                    nx.draw_networkx_nodes(city.graph, pos, ax=ax, nodelist=[victims[vic_idx].location], node_color='red', node_shape='^', node_size=400)
+                    
+                st.pyplot(fig)
