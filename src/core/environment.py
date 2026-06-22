@@ -20,8 +20,13 @@ class CityGraph:
         """
         if location and ox:
             print(f"Loading real OSM data for '{location}'...")
-            # Fetch the drive network for the specified location
-            self.graph = ox.graph_from_place(location, network_type='drive')
+            try:
+                # Fetch the drive network for the specified location
+                self.graph = ox.graph_from_place(location, network_type='drive')
+            except ValueError as e:
+                print(f"graph_from_place failed: {e}. Falling back to graph_from_address...")
+                # Fallback to address search with a 2km radius if the place boundary is invalid/empty
+                self.graph = ox.graph_from_address(location, dist=2000, network_type='drive')
             self.is_osm = True
             
         elif filepath and ox:
