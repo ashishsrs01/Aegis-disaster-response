@@ -20,6 +20,9 @@ class FleetDispatcher:
         # Convert Python list to a high-performance NumPy array
         matrix = np.array(cost_matrix)
         
+        # Replace inf with a large penalty to prevent 'infeasible' errors
+        matrix = np.where(matrix == np.inf, 1e9, matrix)
+        
         # The algorithm returns the optimal row indices (ambulances) 
         # and column indices (victims)
         row_ind, col_ind = linear_sum_assignment(matrix)

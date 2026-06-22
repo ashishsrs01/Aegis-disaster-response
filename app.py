@@ -92,8 +92,11 @@ if run_btn:
             total_time = 0
             for amb_idx, vic_idx in optimal_assignments:
                 time = cost_matrix[amb_idx][vic_idx]
-                total_time += time
-                st.success(f"🚑 Amb {amb_idx} ➔ 🧍 Victim {vic_idx} (ETA: {time:.2f} mins)")
+                if time == float('inf'):
+                    st.error(f"🚑 Amb {amb_idx} ➔ 🧍 Victim {vic_idx} (UNREACHABLE)")
+                else:
+                    total_time += time
+                    st.success(f"🚑 Amb {amb_idx} ➔ 🧍 Victim {vic_idx} (ETA: {time:.2f} mins)")
             st.info(f"**Total Fleet Time:** {total_time:.2f} mins")
         
         # 6. Render the Map visually
