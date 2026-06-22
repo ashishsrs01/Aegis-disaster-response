@@ -29,8 +29,20 @@ with col1:
     use_osm = st.checkbox("Use Real Map (OpenStreetMap)", value=False)
     
     if use_osm:
-        location_input = st.text_input("Enter City/Neighborhood", "Piedmont, California, USA")
-        st.info("Note: Loading real maps can take a few seconds.")
+        location_options = [
+            "Piedmont, California, USA",
+            "New Delhi, India",
+            "Mumbai, India",
+            "Bengaluru, India",
+            "Custom"
+        ]
+        selected_location = st.selectbox("Select City/Neighborhood", location_options)
+        if selected_location == "Custom":
+            location_input = st.text_input("Enter City/Neighborhood", "Connaught Place, New Delhi, India")
+        else:
+            location_input = selected_location
+            
+        st.info("Note: Loading real maps can take a few seconds. Very large cities may take minutes.")
         grid_size = None
     else:
         grid_size = st.slider("City Grid Size", min_value=5, max_value=12, value=8)
