@@ -30,8 +30,8 @@ Unlike standard routing applications, Aegis handles the fog-of-war inherent in d
 * Abandons greedy, localized agent behavior in favor of global optimization. 
 * The system dynamically generates an A* cost matrix representing the exact travel time from *every* ambulance to *every* victim. This matrix is fed into **SciPy's linear sum assignment solver (Hungarian Algorithm)** to calculate the deployment strategy that minimizes the total aggregate fleet action time.
 
-### project Structure
-```
+### Project Structure
+```text
 aegis-disaster-response/
 ├── src/
 │   ├── core/           # Graph environment setup and Victim/Agent entity models
@@ -39,21 +39,50 @@ aegis-disaster-response/
 │   ├── perception/     # Bayesian Networks and hazard trackers
 │   ├── reasoning/      # Triage engine and propositional logic
 │   └── optimization/   # Multi-agent SciPy dispatchers
+├── data/               # OpenStreetMap (OSM) graphs and synthetic scenario configs
+├── tests/              # Automated unit/integration tests (pytest)
+├── docs/               # Architecture Decision Records (ADRs)
+├── scripts/            # Helper scripts (e.g., offline OSM downloader)
+├── .github/workflows/  # CI/CD pipeline automation
 ├── app.py              # Streamlit frontend application
 └── requirements.txt    # Pinned dependencies for cloud deployment
-```
-
-### Future development
-```
-├── data/                       # OpenStreetMap (OSM) graphs and synthetic scenario configs
-├── tests/                      # Automated unit/integration tests (pytest)
-├── docs/                       # Architecture Decision Records (ADRs)
-└── .github/workflows/          # CI/CD pipeline automation
 ```
 
 ## 🚀 Installation & Local Usage
 
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/ashishsrs01/Aegis-disaster-response.git]
+   git clone https://github.com/ashishsrs01/Aegis-disaster-response.git
    cd aegis-disaster-response
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Run the Dashboard:**
+   ```bash
+   streamlit run app.py
+   ```
+
+## 🗺️ Real-World Maps (OSMnx)
+
+Aegis supports generating synthetic grids or importing real-world maps directly from OpenStreetMap!
+In the Streamlit dashboard, simply check **"Use Real Map (OpenStreetMap)"** and type a location (e.g., "Piedmont, California").
+
+*(Note: Downloading OSM maps for the first time can take a few seconds depending on internet speed).*
+
+You can also pre-download areas for offline use using our helper script:
+```bash
+python scripts/download_osm.py --location "Piedmont, California, USA" --output "data/osm/piedmont.graphml"
+```
+
+## 🧪 Testing
+
+We use `pytest` to ensure core algorithms are working correctly. 
+To run the automated tests locally:
+
+```bash
+pytest tests/
+```

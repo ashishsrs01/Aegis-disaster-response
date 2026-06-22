@@ -1,63 +1,106 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 import random
-from typing import Tuple, List
+from typing import Tuple, List, Union, Any
+
+# Optional import for real-world maps
+try:
+    import osmnx as ox
+except ImportError:
+    ox = None
 
 class CityGraph:
     """
     Core mathematical representation of the city environment.
-    Uses a 2D grid graph to simulate city blocks and intersections.
+    Supports both synthetic 2D grids and real-world OSM data.
     """
-    
-    def __init__(self, width: int, height: int):
-        self.width = width
-        self.height = height
-        # Generate a standard grid graph (like Manhattan streets)
-        self.graph = nx.grid_2d_graph(width, height)
+    def __init__(self, width: int = None, height: int = None, location: str = None, filepath: str = None):
+        """
+        Creates either a synthetic grid graph or loads a real OpenStreetMap network.
+        """
+        if location and ox:
+            print(f"Loading real OSM data for '{location}'...")
+            # Fetch the drive network for the specified location
+            self.graph = ox.graph_from_place(location, network_type='drive')
+            # Convert MultiDiGraph to a standard Graph to keep pathfinding simple
+            self.graph = nx.Graph(self.graph)
+            self.is_osm = True
+            
+        elif filepath and ox:
+            print(f"Loading OSM data from file {filepath}...")
+            self.graph = ox.load_graphml(filepath)
+            self.graph = nx.Graph(self.graph)
+            self.is_osm = True
+            
+        else:
+            print("Generating synthetic grid graph...")
+            self.width = width or 10
+            self.height = height or 10
+            self.graph = nx.grid_2d_graph(self.width, self.height)
+            self.is_osm = False
+            
+        self._cache_node_positions()
         self._initialize_edge_weights()
 
-    def _initialize_edge_weights(self) -> None:
-        """
-        Assigns initial travel times (weights) to all roads.
-        Currently random, but later this will be updated dynamically by the Hazard HMM.
-        """
-        for u, v in self.graph.edges():
-            # Weight represents travel time in minutes. Normal roads take 1-3 mins.
-            self.graph[u][v]['weight'] = random.uniform(1.0, 3.0)
+    def _cache_node_positions(self) -> None:
+        """Cache coordinates for distance calculations and rendering."""
+        self.positions = {}
+        for node in self.graph.nodes():
+            if self.is_osm:
+                # OSM graphs store coordinates in 'x' (longitude) and 'y' (latitude) attributes
+                self.positions[node] = (self.graph.nodes[node]['x'], self.graph.nodes[node]['y'])
+            else:
+                # Synthetic grid graphs use the node ID tuple (x, y) as the position
+                self.positions[node] = node
 
-    def get_weight(self, u: Tuple[int, int], v: Tuple[int, int]) -> float:
+    def _initialize_edge_weights(self) -> None:
+        """Assigns initial travel times (weights) to all roads."""
+        for u, v in self.graph.edges():
+            if self.is_osm and 'length' in self.graph[u][v]:
+                # In OSM, edge length is in meters. We convert to an estimated travel time.
+                # Assuming an average urban speed of ~500 meters per minute (30 km/h).
+                self.graph[u][v]['weight'] = self.graph[u][v]['length'] / 500.0
+            else:
+                # Random time between 1 and 3 minutes for synthetic grids
+                self.graph[u][v]['weight'] = random.uniform(1.0, 3.0)
+
+    def get_weight(self, u: Any, v: Any) -> float:
         """Safely retrieve the weight between two connected nodes."""
         if self.graph.has_edge(u, v):
             return self.graph[u][v]['weight']
         return float('inf') # Infinite cost if no road exists
 
-    def visualize(self, path: List[Tuple[int, int]] = None) -> None:
+    def get_node_coords(self, node: Any) -> Tuple[float, float]:
+        """Returns the (x, y) or (lon, lat) coordinates of a node."""
+        return self.positions.get(node, (0, 0))
+
+    def visualize(self, path: List[Any] = None) -> None:
         """Renders the city graph and optionally overlays a calculated path."""
-        pos = {(x, y): (x, y) for x, y in self.graph.nodes()}
-        weights = [self.graph[u][v]['weight'] for u, v in self.graph.edges()]
+        pos = self.positions
+        weights = [self.graph[u][v].get('weight', 1.0) for u, v in self.graph.edges()]
         
-        plt.figure(figsize=(8, 8))
+        plt.figure(figsize=(10, 10))
         
         # Draw base graph
         nx.draw(
-            self.graph, pos, node_color='lightblue', with_labels=True, 
-            node_size=600, font_size=8, edge_color=weights, 
-            edge_cmap=plt.cm.Reds, width=2.5
+            self.graph, pos, node_color='lightblue', with_labels=not self.is_osm, 
+            node_size=50 if self.is_osm else 600, font_size=8, 
+            edge_color=weights, edge_cmap=plt.cm.Reds, width=2.0
         )
         
         # If a path was provided, draw it in bright green on top
         if path:
-            path_edges = list(zip(path, path[1:])) # Create pairs of nodes to form edges
-            nx.draw_networkx_nodes(self.graph, pos, nodelist=path, node_color='lime', node_size=700)
-            nx.draw_networkx_edges(self.graph, pos, edgelist=path_edges, edge_color='lime', width=5)
+            path_edges = list(zip(path, path[1:]))
+            nx.draw_networkx_nodes(self.graph, pos, nodelist=path, node_color='lime', node_size=100 if self.is_osm else 700)
+            nx.draw_networkx_edges(self.graph, pos, edgelist=path_edges, edge_color='lime', width=4)
             
-        plt.title(f"Aegis Simulator - Route Visualization", fontsize=14)
+        title = "OSM Route Visualization" if self.is_osm else "Synthetic Grid Visualization"
+        plt.title(f"Aegis Simulator - {title}", fontsize=14)
         plt.show()
 
-    def update_hazard_level(self, u: Tuple[int, int], v: Tuple[int, int], probability: float) -> None:
+    def update_hazard_level(self, u: Any, v: Any, probability: float) -> None:
         """
         Updates the weight of a road based on the probability of a hazard.
-        This is where Perception meets Navigation.
         """
         if not self.graph.has_edge(u, v):
             return
@@ -73,10 +116,8 @@ class CityGraph:
         print(f"Road {u}->{v} weight updated to {new_weight} (Prob: {probability:.2f})")
 
 # --- Execution Block ---
-# This only runs if we execute this specific file directly.
 if __name__ == "__main__":
     print("Initializing City Graph...")
     city = CityGraph(width=5, height=5)
-    print(f"City generated with {city.graph.number_of_nodes()} intersections and {city.graph.number_of_edges()} roads.")
-    print("Opening visualization...")
+    print(f"City generated with {city.graph.number_of_nodes()} intersections.")
     city.visualize()

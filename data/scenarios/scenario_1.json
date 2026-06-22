@@ -1,0 +1,16 @@
+{
+    "scenario_name": "Downtown Flash Flood",
+    "difficulty": "medium",
+    "grid_size": 10,
+    "ambulances": [
+        {"id": "A1", "start_loc": [0, 0]},
+        {"id": "A2", "start_loc": [9, 9]}
+    ],
+    "victims": [
+        {"id": "V1", "loc": [5, 5], "vitals": {"breathing": true, "conscious": false}},
+        {"id": "V2", "loc": [2, 8], "vitals": {"breathing": true, "conscious": true}}
+    ],
+    "hazards": [
+        {"loc_start": [4, 4], "loc_end": [4, 5], "type": "flood", "probability": 0.8}
+    ]
+}

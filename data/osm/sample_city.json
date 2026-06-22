@@ -1,0 +1,15 @@
+{
+    "description": "Mock representation of a city block for testing.",
+    "nodes": [
+        {"id": "0,0", "x": 0, "y": 0, "type": "intersection"},
+        {"id": "0,1", "x": 0, "y": 1, "type": "intersection"},
+        {"id": "1,0", "x": 1, "y": 0, "type": "intersection"},
+        {"id": "1,1", "x": 1, "y": 1, "type": "intersection"}
+    ],
+    "edges": [
+        {"source": "0,0", "target": "0,1", "weight": 1.5, "road_type": "residential"},
+        {"source": "0,0", "target": "1,0", "weight": 2.0, "road_type": "arterial"},
+        {"source": "1,0", "target": "1,1", "weight": 1.5, "road_type": "residential"},
+        {"source": "0,1", "target": "1,1", "weight": 2.0, "road_type": "arterial"}
+    ]
+}
