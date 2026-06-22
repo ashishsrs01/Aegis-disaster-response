@@ -1,88 +1,146 @@
-# 🚑 Aegis Disaster Response AI
+# Aegis Disaster Response System
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://aegis-disaster-response-ka9chjfkrlwwdxgvbzwappr.streamlit.app)
-![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
-![SciPy](https://img.shields.io/badge/SciPy-Optimization-lightgrey.svg)
-![NetworkX](https://img.shields.io/badge/NetworkX-Graph-green.svg)
-![pgmpy](https://img.shields.io/badge/pgmpy-Probabilistic_Reasoning-orange.svg)
+![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)
+![Tests](https://img.shields.io/badge/tests-pytest-brightgreen)
 
-An intelligent, multi-agent fleet optimization and pathfinding system designed to simulate emergency response logistics in dynamic, uncertain environments. 
+An interactive **disaster response simulator** built as a first-year B.Sc. project. It models a city as a graph, finds shortest ambulance routes with **A\*** search, assigns ambulances to victims using the **Hungarian algorithm**, and applies a simple **START triage** rules engine.
 
-**[🔴 Try the Live Interactive Dashboard Here](https://aegis-disaster-response-ka9chjfkrlwwdxgvbzwappr.streamlit.app)**
+**[Live demo on Streamlit Cloud](https://aegis-disaster-response-ka9chjfkrlwwdxgvbzwappr.streamlit.app)**
 
-## 🧠 Core AI Architecture
+---
 
-Unlike standard routing applications, Aegis handles the fog-of-war inherent in disaster scenarios. It bridges several sub-fields of Artificial Intelligence to create a robust, context-aware dispatch system:
+## Features
 
-### 1. Search & Navigation (Dynamic Pathfinding)
-* Uses the **A* (A-Star) Search Algorithm** over a custom `NetworkX` graph representation of a city. 
-* Implements dynamic graph weighting where road traversal costs are updated in real-time based on simulated traffic and environmental hazards, triggering automatic re-planning when paths become sub-optimal.
+| Module | What it does |
+|--------|----------------|
+| **City graph** | Synthetic grid or real streets from [OpenStreetMap](https://www.openstreetmap.org/) via OSMnx |
+| **Pathfinding** | A* search with road weights (travel time) |
+| **Dispatch** | SciPy `linear_sum_assignment` — optimal ambulance–victim pairing |
+| **Triage** | START-style priority tags (RED / YELLOW / GREEN / BLACK) from victim vitals |
+| **Hazard model** | Bayesian network (pgmpy) for flood probability from sensor data |
+| **Dashboard** | Streamlit web app with map visualization |
 
-### 2. Perception Under Uncertainty (Bayesian Inference)
-* Agents do not blindly trust sensor data. The system utilizes **Bayesian Networks** (`pgmpy`) to evaluate noisy drone/sensor feeds.
-* It calculates the true posterior probability of an environmental hazard (e.g., a flooded route) by fusing contextual priors (like weather forecasts) with the known false-positive/false-negative rates of the sensors.
+---
 
-### 3. Knowledge Representation (Logic-Based Triage)
-* Employs a **Propositional Logic Engine** to implement the real-world S.T.A.R.T. (Simple Triage and Rapid Treatment) medical protocol.
-* The system dynamically categorizes victims into priority tiers (RED, YELLOW, GREEN, BLACK) based on an evaluation of their live vital signs, separating the knowledge base from the inference execution.
+## Quick start
 
-### 4. Multi-Agent Optimization (Operations Research)
-* Abandons greedy, localized agent behavior in favor of global optimization. 
-* The system dynamically generates an A* cost matrix representing the exact travel time from *every* ambulance to *every* victim. This matrix is fed into **SciPy's linear sum assignment solver (Hungarian Algorithm)** to calculate the deployment strategy that minimizes the total aggregate fleet action time.
+### Requirements
 
-### Project Structure
-```text
-aegis-disaster-response/
-├── src/
-│   ├── core/           # Graph environment setup and Victim/Agent entity models
-│   ├── navigation/     # A* Search and pathfinding heuristics
-│   ├── perception/     # Bayesian Networks and hazard trackers
-│   ├── reasoning/      # Triage engine and propositional logic
-│   └── optimization/   # Multi-agent SciPy dispatchers
-├── data/               # OpenStreetMap (OSM) graphs and synthetic scenario configs
-├── tests/              # Automated unit/integration tests (pytest)
-├── docs/               # Architecture Decision Records (ADRs)
-├── scripts/            # Helper scripts (e.g., offline OSM downloader)
-├── .github/workflows/  # CI/CD pipeline automation
-├── app.py              # Streamlit frontend application
-└── requirements.txt    # Pinned dependencies for cloud deployment
-```
+- Python 3.10 or newer
+- Internet connection (only when loading real maps)
 
-## 🚀 Installation & Local Usage
+### Install
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/ashishsrs01/Aegis-disaster-response.git
-   cd aegis-disaster-response
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Run the Dashboard:**
-   ```bash
-   streamlit run app.py
-   ```
-
-## 🗺️ Real-World Maps (OSMnx)
-
-Aegis supports generating synthetic grids or importing real-world maps directly from OpenStreetMap!
-In the Streamlit dashboard, simply check **"Use Real Map (OpenStreetMap)"** and type a location (e.g., "Piedmont, California").
-
-*(Note: Downloading OSM maps for the first time can take a few seconds depending on internet speed).*
-
-You can also pre-download areas for offline use using our helper script:
 ```bash
-python scripts/download_osm.py --location "Piedmont, California, USA" --output "data/osm/piedmont.graphml"
+git clone https://github.com/ashishsrs01/Aegis-disaster-response.git
+cd Aegis-disaster-response
+pip install -r requirements.txt
 ```
 
-## 🧪 Testing
+### Run the app
 
-We use `pytest` to ensure core algorithms are working correctly. 
-To run the automated tests locally:
+```bash
+streamlit run app.py
+```
+
+Open the URL shown in the terminal (usually `http://localhost:8501`).
+
+### Run tests
 
 ```bash
 pytest tests/
 ```
+
+---
+
+## Using the dashboard
+
+1. **Synthetic grid (default)** — adjust grid size in the sidebar and click **Run Simulation**.
+2. **Real map** — enable *Use Real Map (OpenStreetMap)*, pick a preset city or choose **Custom**.
+3. **Custom location** — enter a specific address with city and country, for example:
+   - `Connaught Place, New Delhi, India`
+   - `Marine Drive, Mumbai, India`
+   - `Times Square, New York, USA`
+
+Custom places are downloaded as a **2 km radius** around the geocoded address (needed when the place is a point, not a city boundary).
+
+> **Note:** The first download for a new area can take 10–30 seconds depending on your connection.
+
+---
+
+## Project structure
+
+```
+Aegis-disaster-response/
+├── app.py                  # Streamlit dashboard (main entry point)
+├── requirements.txt
+├── src/
+│   ├── core/               # CityGraph, Victim models
+│   ├── navigation/         # A* pathfinder
+│   ├── optimization/       # Hungarian dispatch optimizer
+│   ├── reasoning/          # START triage engine
+│   └── perception/         # Bayesian hazard tracker
+├── data/
+│   ├── osm/                # Cached map files
+│   └── scenarios/          # Sample scenario JSON
+├── tests/                  # Unit and integration tests
+├── scripts/
+│   └── download_osm.py     # Pre-download maps for offline use
+└── docs/adr/               # Architecture decision records
+```
+
+---
+
+## How the AI pipeline works
+
+```
+City map (grid or OSM)
+        │
+        ▼
+   A* pathfinding  ──►  cost matrix (each ambulance × each victim)
+        │
+        ▼
+ Hungarian algorithm  ──►  optimal assignments
+        │
+        ▼
+  Map + dispatch results (+ triage tags)
+```
+
+**Hazard handling (backend):** road weights can be increased when a flood probability is high, forcing A* to reroute. The Bayesian module in `src/perception/hazard_tracker.py` estimates flood probability from drone sensor readings.
+
+---
+
+## Pre-download maps (optional)
+
+To save a map for offline use:
+
+```bash
+python scripts/download_osm.py --location "Piedmont, California, USA" --output "data/osm/piedmont.graphml"
+```
+
+Load it in code with `CityGraph(filepath="data/osm/piedmont.graphml")`.
+
+---
+
+## Tech stack
+
+- [Streamlit](https://streamlit.io/) — web UI
+- [NetworkX](https://networkx.org/) — graph data structure
+- [OSMnx](https://osmnx.readthedocs.io/) — OpenStreetMap street networks
+- [SciPy](https://scipy.org/) — linear sum assignment (Hungarian algorithm)
+- [pgmpy](https://pgmpy.org/) — Bayesian networks
+- [Matplotlib](https://matplotlib.org/) — map plotting
+
+---
+
+## Author
+
+**Ashish Sharma** — B.Sc. Computer Science (Year 1)  
+GitHub: [@ashishsrs01](https://github.com/ashishsrs01)
+
+---
+
+## License
+
+This project was created for academic purposes. Feel free to use and modify it for learning.

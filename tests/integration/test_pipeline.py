@@ -24,8 +24,10 @@ def test_end_to_end_routing():
     goal = (0, 2)
     path, time = router.a_star(start, goal)
     
-    # Since (0,0)->(0,1) is blocked, it must go around, so (0,1) shouldn't be in the path
-    assert (0, 1) not in path
+    # The blocked edge must not be used (node (0,1) may still appear via other roads)
+    path_edges = list(zip(path, path[1:]))
+    assert ((0, 0), (0, 1)) not in path_edges
+    assert ((0, 1), (0, 0)) not in path_edges
     
     # 4. Dispatch with mock data
     cost_matrix = [[time]] # 1 ambulance, 1 victim
