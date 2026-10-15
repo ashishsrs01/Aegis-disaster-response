@@ -4,7 +4,7 @@
 ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)
 ![Tests](https://img.shields.io/badge/tests-pytest-brightgreen)
 
-An interactive **disaster response simulator** built as a first-year B.Sc. project. It models a city as a graph, finds shortest ambulance routes with **A\*** search, assigns ambulances to victims using the **Hungarian algorithm**, and applies a simple **START triage** rules engine.
+An interactive **disaster response simulator** built as an academic software project. It models a city as a graph, finds shortest ambulance routes with **A\*** search, assigns ambulances to victims using the **Hungarian algorithm**, and applies a simple **START triage** rules engine.
 
 **[Live demo on Streamlit Cloud](https://aegis-disaster-response-ka9chjfkrlwwdxgvbzwappr.streamlit.app)**
 
@@ -136,7 +136,7 @@ Load it in code with `CityGraph(filepath="data/osm/piedmont.graphml")`.
 
 ## Author
 
-**Ashish Sharma** — B.Sc. Applied AI and Data science (Year 1)  
+**Ashish Sharma** — Applied AI and Data Science student at IIT Jodhpur  
 GitHub: [@ashishsrs01](https://github.com/ashishsrs01)
 
 ---
