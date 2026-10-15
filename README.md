@@ -8,6 +8,8 @@ An interactive **disaster response simulator** built as an academic software pro
 
 **[Live demo on Streamlit Cloud](https://aegis-disaster-response-ka9chjfkrlwwdxgvbzwappr.streamlit.app)**
 
+> **Scope and safety:** This is an educational simulation, not a deployed emergency-dispatch system. Its routing, hazard estimates, and START-style tags are simplified demonstrations and are not validated for real-world medical or emergency decisions.
+
 ---
 
 ## Features
